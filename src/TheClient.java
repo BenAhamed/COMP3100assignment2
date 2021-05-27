@@ -26,7 +26,7 @@ public class TheClient {
 		try {
 			socket = new Socket("localhost", 50000);
             din = new DataInputStream(socket.getInputStream());
-			in = new BufferedReader(new DataInputStream(socket.getInputStream()));
+			//in = new BufferedReader(new DataInputStream(socket.getInputStream()));
             
 
 			out = new DataOutputStream(socket.getOutputStream()); 
@@ -59,7 +59,7 @@ public class TheClient {
         //System.out.println("Sent REDY");
 		inputString = Read();
         //System.out.println("Received " + inputString);
-        
+        System.out.println(inputString);
         allToLargest();
 		quit();
 	}
@@ -100,11 +100,10 @@ public class TheClient {
                 write(gets);
                 Read();
                 write("OK");
-                byte[] byteArray = new byte[din.available()];
-				din.read(byteArray);
-                String myString = new String(byteArray); 
-                System.out.println(myString);
-                String server = getsCapable(myString);
+                
+                String a = Read(); 
+                System.out.println(a);
+                String server = getsCapable(a);
                 write("OK");
                 Read();
                 
@@ -131,17 +130,19 @@ public class TheClient {
         for(int i =0; i<splitInput.length; i++) { 
             System.out.println(splitInput[i]);
             String[] server = splitInput[i].split(" ");
-            if(server[3] == "active" || server[3] == "booting" || server[3] == "unavailable"){ 
+            if(server[3].contains("active") || server[3].contains("booting") || server[3].contains("unavailable")){ 
+                i = i;
             }
+            
             else{ 
                 array.add(splitInput[i]);
             }
         } 
 
-        if(array.size() == 0){ 
+        if(array.isEmpty()){ 
             for(int i =0; i<splitInput.length; i++) { 
                 String[] server = splitInput[i].split(" ");
-                if(server[3] != "unavailable");
+                if(server[3].equals("unavailable") == false);
                     array.add(splitInput[i]); 
             }       
         }
@@ -175,7 +176,7 @@ public class TheClient {
 	// }
         public void write(String text) {
             try {
-                out.write((text + "\n").getBytes());
+                out.write((text).getBytes());
                 // System.out.print("SENT: " + text);
                 out.flush();
             } catch (IOException i) {
@@ -186,7 +187,9 @@ public class TheClient {
         public String Read() {
             String text = "";
             try {
-                text = in.ReadLine();
+                byte[] byteArray = new byte[din.available()];
+		din.read(byteArray);
+                text = new String(byteArray); 
                 // System.out.print("RCVD: " + text);
                 inputString = text;
             } catch (IOException i) {
