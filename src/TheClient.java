@@ -103,6 +103,7 @@ public class TheClient {
                 
                 String a = Read(); 
                 System.out.println(a);
+               
                 String server = getsCapable(a);
                 write("OK");
                 Read();
@@ -127,26 +128,28 @@ public class TheClient {
     public String getsCapable(String string){ 
         String[] splitInput = string.split("\\r?\\n");
         ArrayList <String> array = new ArrayList<String>();
+        int j = 5;
+        
+       // while(j>0){
         for(int i =0; i<splitInput.length; i++) { 
-            System.out.println(splitInput[i]);
             String[] server = splitInput[i].split(" ");
-            if(server[3].contains("active") || server[3].contains("booting") || server[3].contains("unavailable")){ 
-                i = i;
-            }
-            
-            else{ 
+             System.out.println(server[3]);
+            if(server[2].equals("active") ==false && server[2].equals("booting")==false && server[2].equals("unavailable")==false){ 
                 array.add(splitInput[i]);
             }
+
+           
         } 
 
         if(array.isEmpty()){ 
             for(int i =0; i<splitInput.length; i++) { 
                 String[] server = splitInput[i].split(" ");
-                if(server[3].equals("unavailable") == false);
+                if(server[2].equals("unavailable") == false);
                     array.add(splitInput[i]); 
             }       
         }
-        
+       // j--;
+   // }
         return array.get(0);
     }
     
@@ -190,7 +193,7 @@ public class TheClient {
                 byte[] byteArray = new byte[din.available()];
 		din.read(byteArray);
                 text = new String(byteArray); 
-                // System.out.print("RCVD: " + text);
+                 System.out.print("RCVD: " + text);
                 inputString = text;
             } catch (IOException i) {
                 System.out.println("ERR: " + i);
