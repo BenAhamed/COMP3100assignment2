@@ -1,5 +1,6 @@
 import java.net.*;
-import java.util.ArrayList;
+import java.util.*;
+import java.util.stream.Stream;
 import java.io.*;
 import org.w3c.dom.*;
 import javax.xml.parsers.DocumentBuilder;
@@ -25,11 +26,11 @@ public class TheClient {
 	public TheClient() {
 		try {
 			socket = new Socket("localhost", 50000);
-            din = new DataInputStream(socket.getInputStream());
-			//in = new BufferedReader(new DataInputStream(socket.getInputStream()));
+            out = new DataOutputStream(socket.getOutputStream());
+			in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             
 
-			out = new DataOutputStream(socket.getOutputStream()); 
+			//out = new DataOutputStream(socket.getOutputStream()); 
 		} catch (UnknownHostException i) {
 			System.out.println("Error: " + i);
 		} catch (IOException i) {
@@ -59,7 +60,7 @@ public class TheClient {
         //System.out.println("Sent REDY");
 		inputString = Read();
         //System.out.println("Received " + inputString);
-        System.out.println(inputString);
+        //System.out.println(inputString);
         allToLargest();
 		quit();
 	}
@@ -70,10 +71,13 @@ public class TheClient {
 			quit();
 		} else {
 			while (!completed) {
-				if (inputString.equals("OK") || inputString.equals(".OK") || inputString.equals(".")) {
+				if (inputString.equals("OK") || inputString.equals(".OK") || inputString.equals(".")|| inputString.equals(" .")) {
 					write("REDY");
                     //System.out.println("Sent REDY");
 					inputString = Read();
+                    if(inputString.equals("NONE")){ 
+                        break;
+                    }
                     //System.out.println("Received " + inputString);
 				}
                 String [] splitMessage = inputString.split("\\s+");
@@ -93,94 +97,117 @@ public class TheClient {
 				}
 
                 
-               // write("OK");
-				String[] jobSections = inputString.split("\\s+"); 
-                String gets = "GETS Capable " + jobSections[4] + " " + jobSections[5] + " " + jobSections[6];
-                System.out.println(gets);
-                write(gets);
-                Read();
-                write("OK");
-                
-                String a = Read(); 
-                System.out.println(a);
+               write("OK");
                
-                String server = getsCapable(a);
-                write("OK");
-                Read();
+               String[] jobSections = inputString.split("\\s+");
+              // while (x=false){
+				 if(jobSections.length <7){ 
+                   // 
+                    inputString = Read();
+                    System.out.println(" ???? " + inputString + "     ????"); 
+                 }
+               
                 
-                String[] serverInfo = server.split(" "); 
+                jobSections = inputString.split("\\s+");
+                if(jobSections[0].equals("JCPL") == false){
+              
+               
+                String gets = "GETS Capable " + jobSections[4] + " " + jobSections[5] + " " + jobSections[6];
+              
+                write(gets);
+                String data = Read();
+                String[] splitData = data.split(" ");
+                int numServers = Integer.parseInt(splitData[1]);
+                write("OK");
+                String[] servers = new String[numServers];                            
+                String set = "";
+            String l= "";
+            String worstCase = "";
+                for(int i =0; i<numServers; i++) {
+                    
+                 
+                    l = Read();
+                   
+               
+                if(l == null){ 
+                	break;
+                	}
+                if(getsCapable(l)==true && set.equals("")){
+                    set = l;
+                    try {
+                        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                    } catch (IOException e) {
+
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                    break;
+                   
+                }
+                if(i == numServers-1 && set.equals("")){ 
+                	set = l;
+                }
+                
+               
+            
+                System.out.println(l);
+           }
+           write("OK");
+           System.out.println(set);
+                String[] serverInfo = set.split(" "); 
                 String serverID = serverInfo[1]; 
                 String serverName = serverInfo[0]; 
 
 				String jobnum = jobSections[2];
 				String scheduleMessage = "SCHD " + jobnum + " " + serverName + " " + serverID;
+				//System.out.println("Received " + scheduleMessage);
 				write(scheduleMessage);
                 
-               // write("OK");
+                //write("OK");
                 //System.out.println("JOB SENT: SCHD " + count + " " + servers[largestServer].type + " " + "0");
                 inputString = Read();
                 //System.out.println("Received " + inputString);
+                }
 			}
 		}
     }
 
 
-    public String getsCapable(String string){ 
-        String[] splitInput = string.split("\\r?\\n");
-        ArrayList <String> array = new ArrayList<String>();
-        int j = 5;
+    public Boolean getsCapable(String string){ 
+        //String[] splitInput = string.split(" ");
+       
+       // List <String> array = Arrays.asList(splitInput); 
+        //ArrayList <String> temp = new ArrayList<String>();
+        //Iterator<String> it = array.iterator();
+        int j = 0;
         
        // while(j>0){
-        for(int i =0; i<splitInput.length; i++) { 
-            String[] server = splitInput[i].split(" ");
-             System.out.println(server[3]);
+      
+            
+            String[] server = string.split(" ");
+          
+               
+             //System.out.println(server[3]);
             if(server[2].equals("active") ==false && server[2].equals("booting")==false && server[2].equals("unavailable")==false){ 
-                array.add(splitInput[i]);
+                return true;
             }
-
            
-        } 
+        
+          else{ 
+              return false;
+          }  
+           
+         
 
-        if(array.isEmpty()){ 
-            for(int i =0; i<splitInput.length; i++) { 
-                String[] server = splitInput[i].split(" ");
-                if(server[2].equals("unavailable") == false);
-                    array.add(splitInput[i]); 
-            }       
-        }
-       // j--;
-   // }
-        return array.get(0);
+        
+        
+        
     }
-    
 
-    // public void ReadFile(File file) {
-	// 	try {
-			
-	// 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-	// 		DocumentBuilder builder = factory.newDocumentBuilder();
-	// 		Document systemDocument = builder.parse(file);
-	// 		systemDocument.getDocumentElement().normalize();
-			
-	// 		NodeList serverNodeList = systemDocument.getElementsByTagName("server");
-	// 		servers = new Server[serverNodeList.getLength()];
-	// 		for (int i = 0; i < serverNodeList.getLength(); i++) {
-	// 			Element server = (Element) serverNodeList.item(i);
-	// 			String t = server.getAttribute("type");
-	// 			int c = Integer.parseInt(server.getAttribute("coreCount"));
-	// 			Server temp = new Server(i, t, c);
-	// 			servers[i] = temp;
-	// 		}
-	// 		largestServerIndex = 0;
-	// 	} catch (Exception i) {
-	// 		i.printStackTrace();
-	// 	}
-
-	// }
         public void write(String text) {
             try {
-                out.write((text).getBytes());
-                // System.out.print("SENT: " + text);
+                out.write((text + "\n").getBytes());
+               // System.out.print("SENT: " + text);
                 out.flush();
             } catch (IOException i) {
                 System.out.println("ERR: " + i);
@@ -190,11 +217,10 @@ public class TheClient {
         public String Read() {
             String text = "";
             try {
-                byte[] byteArray = new byte[din.available()];
-		din.read(byteArray);
-                text = new String(byteArray); 
-                 System.out.print("RCVD: " + text);
+                text = in.readLine();
+                // System.out.print("RCVD: " + text);
                 inputString = text;
+                
             } catch (IOException i) {
                 System.out.println("ERR: " + i);
             }
